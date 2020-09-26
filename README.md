@@ -31,8 +31,8 @@ Before the QIIME Pipeline can be used a classifier must be downloaded.
 
 At the time of release, this classifier is the 13_8 from [Greengenes](http://greengenes.secondgenome.com/) formatted as a QIIME2 artifact.
 
-If you already have these files, place a copy of them into the QIIMEPIPELINEDIR/files_needed_for_MbT directory.
-If you do not have these files, they can be downloaded automatically as part of the following step.
+If you already have this file, place a copy of it into the QIIMEPIPELINEDIR/files_needed_for_MbT directory.
+If you do not have this file, it can be downloaded as part of the following step.
 
 Change to the QIIMEPIPELINEDIR/files_needed_for_MbT directory.
 Execute the command:
