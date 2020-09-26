@@ -50,7 +50,7 @@ The pipeline is capable of dealing with both single-end and paired-end. It will 
 
 To run the pipeline using a file described above, and saving the output in the pipeline directory which will be labeled "the file's name + _output" for single-end (1) or paired-end (2):
 
-`path_to_qiime_pipeline_folder/pipeline -a path_to_accession_file/accession.csv -o 1`
+`QIIMEPIPELINEDIR/pipeline -a path_to_accession_file/accession.csv -o 1`
 
 If running from within the pipeline directory:
 
