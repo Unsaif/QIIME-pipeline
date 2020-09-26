@@ -1,0 +1,64 @@
+#!/bin/bash
+
+while getopts d: options; do
+	case $options in 
+		d) dir_path=$OPTARG;;
+	esac
+done
+
+path=$(dirname "$0")
+
+if mkdir $path/workspace
+then
+:
+else
+
+echo ""
+echo "Deleting and creating new directory"
+rm -r $path/workspace
+mkdir $path/workspace
+
+fi
+
+if [ -d $dir_path ] 
+then
+:
+else
+
+echo ""
+echo "Cannot find directory"
+exit
+
+fi
+
+mv $dir_path $path/workspace
+
+out=${dir_path##*/}
+
+cd $path
+
+cp files_needed_for_MbT/AGORA2_infoFile.xlsx workspace
+cp files_needed_for_MbT/names_in_agora2.xlsx workspace
+cp python_scripts/input_file_for_MbT_genus_function.py workspace
+cp python_scripts/input_file_for_MbT_species_function.py workspace
+
+cd workspace/$out
+
+mv feature-table.tsv ..
+mv taxonomy.tsv ..
+
+python ../input_file_for_MbT_species_function.py
+python ../input_file_for_MbT_genus_function.py
+
+mv ../feature-table.tsv ../$out
+mv ../taxonomy.tsv ../$out
+
+cd ..
+
+mv $out ..
+
+cd ..
+
+rm -r workspace
+
+

@@ -1,0 +1,243 @@
+#!/bin/bash
+
+SECONDS=0
+
+set -e
+
+while getopts a:o: options; do
+	case $options in 
+		a) MySQL=$OPTARG;;
+		o) op=$OPTARG;;
+	esac
+done
+
+path=$(dirname "$0")
+
+if mkdir $path/workspace
+then
+:
+else
+
+echo ""
+echo "Deleting and creating new directory"
+rm -r $path/workspace
+mkdir $path/workspace
+
+fi
+
+if cp $MySQL $path/workspace
+then
+:
+else
+
+echo ""
+echo "ERROR: Cannot find accession file"
+echo "Please check path name again"
+exit
+
+fi
+
+if [ $op -eq 1 ] || [ $op -eq 2 ]
+then
+:
+else
+
+echo ""
+echo "ERROR: -o can only take 1 or 2"
+exit
+
+fi
+
+cd $path
+
+if [ $op -eq 1 ]
+then
+
+cp files_needed_for_MbT/AGORA2_infoFile.xlsx workspace
+cp files_needed_for_MbT/names_in_agora2.xlsx workspace
+cp files_needed_for_MbT/gg-13-8-99-nb-classifier.qza workspace
+cp python_scripts/download_fastq_automation_single.py workspace
+cp python_scripts/input_file_for_MbT_genus_function.py workspace
+cp python_scripts/input_file_for_MbT_species_function.py workspace
+
+cd workspace
+
+string="_output"
+var=${MySQL%.*}
+var=${var##*/} 
+concat_string=$var$string
+
+mkdir $concat_string
+
+python download_fastq_automation_single.py
+
+duration_download=$SECONDS
+
+echo "$(($duration_download / 60)) minutes and $(($duration_download % 60)) seconds elapsed."
+echo ""
+
+qiime tools import \
+  --type 'SampleData[SequencesWithQuality]' \
+  --input-path manifest.tsv \
+  --output-path single-end-demux.qza \
+  --input-format SingleEndFastqManifestPhred33V2
+
+qiime quality-filter q-score \
+ --i-demux single-end-demux.qza \
+ --o-filtered-sequences demux-filtered.qza \
+ --o-filter-stats demux-filter-stats.qza
+
+qiime deblur denoise-16S \
+  --i-demultiplexed-seqs demux-filtered.qza \
+  --p-trim-length 120 \
+  --o-representative-sequences rep-seqs-deblur.qza \
+  --o-table table-deblur.qza \
+  --p-sample-stats \
+  --o-stats deblur-stats.qza
+
+mv rep-seqs-deblur.qza rep-seqs.qza
+mv table-deblur.qza table.qza
+
+qiime feature-classifier classify-sklearn \
+  --i-classifier gg-13-8-99-nb-classifier.qza \
+  --i-reads rep-seqs.qza \
+  --o-classification taxonomy.qza
+
+qiime tools export \
+ --input-path table.qza \
+ --output-path exported-feature-table
+
+biom convert -i exported-feature-table/feature-table.biom -o feature-table.tsv --to-tsv 
+
+qiime tools export \
+ --input-path taxonomy.qza \
+ --output-path exported-taxonomy-table
+
+mv exported-taxonomy-table/taxonomy.tsv taxonomy.tsv
+
+cd $concat_string
+
+python ../input_file_for_MbT_species_function.py
+python ../input_file_for_MbT_genus_function.py
+
+cd ..
+
+mv feature-table.tsv $concat_string
+mv taxonomy.tsv $concat_string
+
+if mv $concat_string ..
+then
+:
+else
+
+echo ""
+echo "Deleting old directory and replacing with new directory"
+rm -r ../$concat_string
+mv $concat_string ..
+
+fi
+
+cd ..
+
+rm -r workspace
+
+fi
+
+if [ $op -eq 2 ]
+then
+
+cp files_needed_for_MbT/AGORA2_infoFile.xlsx workspace
+cp files_needed_for_MbT/names_in_agora2.xlsx workspace
+cp files_needed_for_MbT/gg-13-8-99-nb-classifier.qza workspace
+cp python_scripts/download_fastq_automation_double.py workspace
+cp python_scripts/input_file_for_MbT_genus_function.py workspace
+cp python_scripts/input_file_for_MbT_species_function.py workspace
+
+cd workspace
+
+string="_output"
+var=${MySQL%.*}
+var=${var##*/} 
+concat_string=$var$string
+
+mkdir $concat_string
+
+python download_fastq_automation_double.py
+
+duration_download=$SECONDS
+
+echo "$(($duration_download / 60)) minutes and $(($duration_download % 60)) seconds elapsed."
+echo ""
+
+qiime tools import \
+  --type 'SampleData[PairedEndSequencesWithQuality]' \
+  --input-path manifest.tsv \
+  --output-path paired-end-demux.qza \
+  --input-format PairedEndFastqManifestPhred33V2
+
+qiime quality-filter q-score \
+ --i-demux paired-end-demux.qza  \
+ --o-filtered-sequences demux-filtered.qza \
+ --o-filter-stats demux-filter-stats.qza
+
+qiime deblur denoise-16S \
+  --i-demultiplexed-seqs demux-filtered.qza \
+  --p-trim-length 120 \
+  --o-representative-sequences rep-seqs-deblur.qza \
+--o-table table-deblur.qza \
+  --p-sample-stats \
+  --o-stats deblur-stats.qza
+
+mv rep-seqs-deblur.qza rep-seqs.qza
+mv table-deblur.qza table.qza
+
+qiime feature-classifier classify-sklearn \
+  --i-classifier gg-13-8-99-nb-classifier.qza \
+  --i-reads rep-seqs.qza \
+  --o-classification taxonomy.qza
+
+qiime tools export \
+ --input-path table.qza \
+ --output-path exported-feature-table
+
+biom convert -i exported-feature-table/feature-table.biom -o feature-table.tsv --to-tsv 
+
+qiime tools export \
+ --input-path taxonomy.qza \
+ --output-path exported-taxonomy-table
+
+mv exported-taxonomy-table/taxonomy.tsv taxonomy.tsv
+
+cd $concat_string
+
+python ../input_file_for_MbT_species_function.py
+python ../input_file_for_MbT_genus_function.py
+
+cd ..
+
+mv feature-table.tsv $concat_string
+mv taxonomy.tsv $concat_string
+
+if mv $concat_string ..
+then
+:
+else
+
+echo ""
+echo "Deleting old directory and replacing with new directory"
+rm -r ../$concat_string
+mv $concat_string ..
+
+fi
+
+cd ..
+
+rm -r workspace
+
+fi
+
+duration=$SECONDS
+
+echo ""
+echo "$(($duration / 60)) minutes and $(($duration % 60)) seconds elapsed."
+  
