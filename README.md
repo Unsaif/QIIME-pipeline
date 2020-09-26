@@ -58,7 +58,7 @@ If running from within the pipeline directory:
 
 # OUTPUT
 
-The output of the QIIME Pipeline is a directory named "name of the accession file" + "_output" situated in the QIIME Pipeline directory and it consists of ten files:
+The QIIME Pipeline writes output in a plain text format with tab separated columns (.tsv). The output of the QIIME Pipeline is a directory named "name of the accession file" + "_output" situated in the QIIME Pipeline directory and it consists of ten files:
 
 * The relative abundance tables on a species and genus level: **QIIME2_MbT_Species.tsv** & **QIIME2_MbT_Genus.tsv**, respectively.
     
